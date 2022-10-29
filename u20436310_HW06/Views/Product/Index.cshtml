@@ -1,57 +1,258 @@
-﻿@model IEnumerable<u20436310_HW06.Models.product>
+﻿@model IPagedList<u20436310_HW06.Models.product>
 
 @{
-    ViewBag.Title = "Index";
+    ViewBag.Title = "Product Page";
 }
 
-<h2>Index</h2>
+@using PagedList;
+@using PagedList.Mvc;
+<h2>List Of Products</h2>
 
-<p>
-    @Html.ActionLink("Create New", "Create")
-</p>
+@using (Html.BeginForm("Index", "Product", FormMethod.Get))
+{
+    <form class="form-inline" role="form">
+        <div class="row">
+            <div class="form-group col-lg-3">
+                <input type="text" class="form-control" name="search" id="search" placeholder="Enter Product Name">
+            </div>
+            <div class="form-group col-lg-1">
+                <button type="submit" class="btn btn-success">Search</button>
+            </div>
+            <div class="form-group col-lg-1">
+                <input type="button" class="btn btn-primary btnCreate" value="Create" style="margin-left: 0px">
+            </div>
+        </div>
+
+    </form>
+}
+
+
 <table class="table">
     <tr>
         <th>
-            @Html.DisplayNameFor(model => model.product_name)
+            Product Name
         </th>
         <th>
-            @Html.DisplayNameFor(model => model.model_year)
+            Model Year
         </th>
         <th>
-            @Html.DisplayNameFor(model => model.list_price)
+            List Price
         </th>
         <th>
-            @Html.DisplayNameFor(model => model.brand.brand_name)
+            Brand Name
         </th>
         <th>
-            @Html.DisplayNameFor(model => model.category.category_name)
+            Category Name
         </th>
-        <th></th>
+        <th>
+
+        </th>
     </tr>
 
-@foreach (var item in Model) {
-    <tr>
-        <td>
-            @Html.DisplayFor(modelItem => item.product_name)
-        </td>
-        <td>
-            @Html.DisplayFor(modelItem => item.model_year)
-        </td>
-        <td>
-            @Html.DisplayFor(modelItem => item.list_price)
-        </td>
-        <td>
-            @Html.DisplayFor(modelItem => item.brand.brand_name)
-        </td>
-        <td>
-            @Html.DisplayFor(modelItem => item.category.category_name)
-        </td>
-        <td>
-            @Html.ActionLink("Edit", "Edit", new { id=item.product_id }) |
-            @Html.ActionLink("Details", "Details", new { id=item.product_id }) |
-            @Html.ActionLink("Delete", "Delete", new { id=item.product_id })
-        </td>
-    </tr>
-}
+    @foreach (var item in Model)
+    {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.product_name)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.model_year)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.list_price)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.brand.brand_name)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.category.category_name)
+            </td>
+            <td>
+                <button class="btn btn-primary btnEdit" data-id="@item.product_id">Edit</button> |
+                <button id="btnDetails" class="btn btn-info btnDetials" data-id="@item.product_id">Details</button> |
+                <button id="btnDelete" class="btn btn-danger" data-id="@item.product_id">Delete</button>
+            </td>
+        </tr>
+    }
 
 </table>
+
+@Html.PagedListPager(Model, index => Url.Action("Index", "Product", new { index, search = Request.QueryString["search"] }))
+
+<!-- Modal -->
+<div id="ModalDisplay" class="modal fade" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                @*<h4 class="modal-title">Modal Header</h4>*@
+            </div>
+            <div class="modal-body">
+
+            </div>
+            <div class="modal-footer">
+
+            </div>
+        </div>
+
+    </div>
+</div>
+
+@section scripts {
+    <script>
+        // funcion to save the product
+        function SaveProduct() {
+            var newProduct = {
+                product_name: $('#productName').val(),
+                brand_id: parseInt($('#productBrand').val()),
+                category_id: parseInt($('#productCatergory').val()),
+                model_year: parseInt($('#productModel').val()),
+                list_price: parseFloat($('#productPrice').val())
+            };
+
+             $.post({
+                url: "@Url.Action("Create", "Product")",
+                method: "POST",
+                data: {
+                    product: newProduct
+                },
+                success: (data, status) => {
+                    $('#ModalDisplay').modal('toggle');
+                }
+             })
+            location.reload();
+        }
+
+        // function to edit the product, called using productid
+        function EditProduct() {
+            var newProduct = {
+                product_id : $('#productId').val(),
+                product_name: $('#productName').val(),
+                brand_id: parseInt($('#productBrand').val()),
+                category_id: parseInt($('#productCatergory').val()),
+                model_year: parseInt($('#productModel').val()),
+                list_price: parseFloat($('#productPrice').val())
+            };
+
+             $.post({
+                url: "@Url.Action("Edit", "Product")",
+                method: "POST",
+                data: {
+                    product: newProduct
+                },
+                success: (data, status) => {
+                    $('#ModalDisplay').modal('toggle');
+                }
+             })
+            location.reload();
+        }
+
+
+        $(document).ready(function () {
+
+            // Show the modal after create button pressed, load form
+            document.querySelectorAll('.btnCreate').forEach((button) => {
+                button.addEventListener('click', (e) => {
+                    $('#ModalDisplay').modal('show');
+                    $(".modal-body").load('/Product/Create');
+                    LoadBrands();
+                    LoadCategories();
+                });
+            });
+
+            // Show the details of the product in a model using the following names
+            document.querySelectorAll('.btnDetials').forEach((button) => {
+                button.addEventListener('click', (e) => {
+                    $('#ModalDisplay').modal('toggle');
+                    $(".modal-body").load('/Product/Details');
+                    var productId = event.target.getAttribute('data-id')
+
+                    $.post({
+                    url: "@Url.Action("Details", "Product")",
+                    method: "POST",
+                    data: {
+                        id: productId
+                    },
+                    success: (data, status) => {
+                        console.log(data)
+                        let product = JSON.parse(data)
+
+                        $(product.shops).each((i, shop) => {
+                            $('#table-body').append(`<tr><td>${shop.store_name}</td><td>${shop.quantity}</td></tr>`)
+                        })
+                        $('#header').text(product.product_name)
+                        $('#productName').text(product.product_name)
+                        $('#productPrice').text(product.list_price)
+                        $('#productModel').text(product.model_year)
+                        $("#productBrand").text(product.brand_name)
+                        $("#productCategory").text(product.category_name)
+                    }
+                });
+
+                });
+            });
+
+            // Show the modal on-click with the edit form and the products information
+            document.querySelectorAll('.btnEdit').forEach((button) => {
+                button.addEventListener('click', event => {
+                    $('#ModalDisplay').modal('toggle');
+                    $(".modal-body").load('/Product/Edit');
+                    var productId = event.target.getAttribute('data-id')
+
+                $.get({
+                    url: "@Url.Action("GetProductById", "Product")",
+                    method: "GET",
+                    data: {
+                        id: productId
+                    },
+                    success: (data, status) => {
+                        console.log(data)
+                        let product = JSON.parse(data)
+                        $('#productId').val(product.product_id)
+                        $('#productName').val(product.product_name)
+                        $('#productPrice').val(product.list_price)
+                        $('#productModel').val(product.model_year)
+                        $("#productBrand").append(`<option value="${product.brand_id}">${product.brand_name}</option>`);
+                        LoadBrands() //local function declared below
+                        $("#productCatergory").append(`<option value="${product.category_id}">${product.category_name}</option>`);
+                        LoadCategories() //local function declared below since it references a different table
+                    }
+                });
+                });
+            });
+
+
+
+            // Load Brands dropdown
+            function LoadBrands() {
+                $.get({
+                    url: "@Url.Action("Brands", "Product")",
+                    method: "GET",
+                    success: (data, status) => {
+                        let  brands = JSON.parse(data);
+                        let select = $("#productBrand");
+                        $(brands).each((i, brand) => {
+                            select.append(`<option value="${brand.brand_id}">${brand.brand_name}</option>`);
+                        });
+                    }
+                });
+            }
+
+            // Load Categories dropdown
+            function LoadCategories() {
+                $.get({
+                    url: "@Url.Action("Categories", "Product")",
+                    method: "GET",
+                    success: (data, status) => {
+                        console.log(data)
+                        let categories = JSON.parse(data);
+                        $(categories).each((i, category) => {
+                            $("#productCatergory").append(`<option value="${category.category_id}">${category.category_name}</option>`);
+                        });
+                    }
+                });
+            }
+        });
+    </script>
+
+}
