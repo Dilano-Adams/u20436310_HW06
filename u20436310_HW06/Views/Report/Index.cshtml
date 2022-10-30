@@ -1,8 +1,12 @@
 ﻿@{
     ViewBag.Title = "Graph Report";
 }
+<form>
+    <h2>Mountain Bikes Report</h2>
 
-<h2>Mountain Bikes Report</h2>
+    <button class="btn btn-warning" onclick="downloadpdf()">Download Chart as PDF</button>
+</form>
+
 
 <div class="mb-5 mt-5">
     <div>
@@ -76,12 +80,16 @@
                         type: 'bar',
 
                         data: {
-                            labels: ["Jan", "Feb", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
+                            labels: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
                             datasets: [{
                                 label: 'Number of Mountain Bikes Sold',
                                 data: chartData,
-                                fillColor: "rgba(220,220,220,0.5)", //Change Fill colours
-                                backgroundColor: ['rgb(255, 99, 132)', 'rgb(0, 255, 0)', 'rgb(255, 99, 132)', 'rgb(128, 255, 0)', 'rgb(0, 255, 255)', 'rgb(255, 255, 0)', 'rgb(255, 255, 128)'],
+                                fillColor: "rgba(220,220,220,0.5)",
+                                backgroundColor: ['rgb(255, 99, 132)',
+                                    'rgb(0, 255, 0)', 'rgb(255, 99, 132)',
+                                    'rgb(128, 255, 0)', 'rgb(0, 255, 255)',
+                                    'rgb(255, 255, 0)', 'rgb(255, 255, 128)'
+                                ],
                                 highlightFill: "rgba(220,220,220,0.75)",
                                 highlightStroke: "rgba(220,220,220,1)",
                             }]
@@ -91,6 +99,15 @@
                 }
             });
         });
+                function downloadpdf() {
+                    var newCanvas = document.querySelector('#chart');
+                    var newCanvasImg = newCanvas.toDataURL("image/png", 1.0)
+                    var doc = new jsPDF('landscape');
+                    doc.setFontSize(20);
+                    doc.text(15, 15, "Product chart");
+                    doc.addImage(newCanvasImg, 'JPEG', 10, 10, 280, 150);
+                    doc.save('MountainBikeReport.pdf');
+                }
     </script>
 }
 

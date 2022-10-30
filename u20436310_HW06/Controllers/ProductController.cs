@@ -19,7 +19,7 @@ namespace u20436310_HW06.Controllers
         // GET: Brands
         public string Brands() // Used to populate the modal dropdown. See Index View
         {
-            db.Configuration.ProxyCreationEnabled = false;
+            db.Configuration.ProxyCreationEnabled = false; //Avoids all objects related to the one you using to be loaded on memory.
             List<brand> brands = db.brands.ToList();
             return JsonConvert.SerializeObject(brands);
         }
@@ -32,7 +32,7 @@ namespace u20436310_HW06.Controllers
         }
 
         // GET: Product
-        public ActionResult Index(string search,  int? page)
+        public ActionResult Index(string search, int? page)
         {
             var products = db.products.Include(p => p.brand).Include(p => p.category);
 
@@ -42,10 +42,11 @@ namespace u20436310_HW06.Controllers
             }
 
             return View(products.ToList().ToPagedList(page ?? 1, 10));
+            //return Json(getdata, JsonRequestBehavior.AllowGet);  // This would be used woth a Product View Model
         }
 
         // GET: Product/Details/5
-        public ActionResult Details(int? id)
+        public ActionResult Details()
         {
             //if (id == null)
             //{
@@ -58,7 +59,7 @@ namespace u20436310_HW06.Controllers
             //}
             //return View(product);
 
-            return PartialView(id);
+            return PartialView();
         }
         [HttpPost]
         public string Details(int id)
@@ -73,7 +74,7 @@ namespace u20436310_HW06.Controllers
                     shops = db.stocks.Where(s => s.product_id == id).Select(n => new { store_name = n.store.store_name, quantity = n.quantity }),
                     brand_name = p.product.brand.brand_name,
                     category_name = p.product.category.category_name
-            }).FirstOrDefault();
+                }).FirstOrDefault();
 
             return JsonConvert.SerializeObject(product);
         }
@@ -106,7 +107,7 @@ namespace u20436310_HW06.Controllers
         }
 
         // GET: Product/Edit/5
-        public ActionResult Edit(int? id)
+        public ActionResult Edit()
         {
             //if (id == null)
             //{
@@ -174,6 +175,31 @@ namespace u20436310_HW06.Controllers
                 db.Dispose();
             }
             base.Dispose(disposing);
+        }
+
+        public string GetProductById(int? id)
+        {
+            if (id == null)
+            {
+                //return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
+            }
+
+            object product = db.products.Where(x => x.product_id == id).Select(p => new {
+                product_id = p.product_id,
+                product_name = p.product_name,
+                brand_id = p.brand_id,
+                category_id = p.category_id,
+                brand_name = p.brand.brand_name,
+                category_name = p.category.category_name,
+                model_year = p.model_year,
+                list_price = p.list_price
+            }).FirstOrDefault();
+            if (product == null)
+            {
+                // return HttpNotFound();
+            }
+
+            return JsonConvert.SerializeObject(product);
         }
     }
 }
